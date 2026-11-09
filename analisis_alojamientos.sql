@@ -9,7 +9,6 @@ SET DIST_METRO = REPLACE(DIST_METRO,',','.'),
 	DIST_CENTRO = REPLACE(DIST_CENTRO,',','.');
     
 	-- Conversión de las columnas de distancia de texto a decimal. 
-    
 ALTER TABLE UBICACION
 MODIFY COLUMN DIST_METRO DECIMAL(5,2),
 MODIFY COLUMN DIST_CENTRO DECIMAL(5,2);
@@ -17,7 +16,6 @@ MODIFY COLUMN DIST_CENTRO DECIMAL(5,2);
 DESC UBICACION;
 
 	-- Eliminación de tres columnas adicionales generadas durante la importación del CSV.
- 
 ALTER TABLE PUNTUACION
 RENAME COLUMN MyUnknownColumn TO COL_1;
 
@@ -36,8 +34,7 @@ DROP COLUMN COL_4;
 ALTER TABLE PUNTUACION
 DROP COLUMN COL_2;
 
-	-- Sustitución de comas por puntos como separador decimal
--- en las columnas PUNTOS y PUNTOS_AGENCIA. 
+	-- Sustitución de comas por puntos como separador decimal en las columnas PUNTOS y PUNTOS_AGENCIA. 
 
 UPDATE PUNTUACION
 SET PUNTOS = REPLACE(PUNTOS,',','.'),
@@ -54,7 +51,6 @@ SET PUNTOS_AGENCIA = NULL
 WHERE TRIM(PUNTOS_AGENCIA) = '';
 
 	-- Conversión de las columnas de puntuación de texto a decimal. 
-    
 ALTER TABLE PUNTUACION
 MODIFY COLUMN PUNTOS DECIMAL(5,2),
 MODIFY COLUMN PUNTOS_AGENCIA DECIMAL(5,2); 
@@ -116,8 +112,7 @@ AND PUNTOS_AGENCIA>4
 ORDER BY PUNTOS DESC;
 
 -- 3. SELECCIÓN DE ALOJAMIENTOS QUE CUMPLEN TODOS LOS REQUISITOS
-    -- Integración de las cuatro tablas mediante INNER JOIN y aplicación
--- conjunta de los criterios de selección establecidos por el cliente.
+    -- Integración de las cuatro tablas mediante INNER JOIN y aplicación conjunta de los criterios de selección establecidos por el cliente.
 SELECT
 	A.CODIGO_ALOJAMIENTO,
     A.NOMBRE,
@@ -159,8 +154,7 @@ WHERE A.TERRAZA = 'SI'
 
 -- 4. ANÁLISIS DE RESULTADOS Y RECOMENDACIÓN 
     
-    -- 4.1. Evaluación de los cuatro alojamientos que cumplen todos 
-    -- los requisitos y selección de la alternativa más adecuada.
+    -- 4.1. Evaluación de los cuatro alojamientos que cumplen todos los requisitos y selección de la alternativa más adecuada.
     
 -- 4.2. ANÁLISIS COMPLEMENTARIO DE LOS ALOJAMIENTOS
 	
