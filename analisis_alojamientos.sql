@@ -1,0 +1,216 @@
+-- 1. PREPARACIÓN DE DATOS
+    
+	-- Sustitución de comas por puntos como separador decimal
+-- en las columnas DIST_METRO y DIST_CENTRO.
+SELECT * FROM UBICACION;
+
+UPDATE UBICACION
+SET DIST_METRO = REPLACE(DIST_METRO,',','.'),
+	DIST_CENTRO = REPLACE(DIST_CENTRO,',','.');
+    
+	-- Conversión de las columnas de distancia de texto a decimal. 
+    
+ALTER TABLE UBICACION
+MODIFY COLUMN DIST_METRO DECIMAL(5,2),
+MODIFY COLUMN DIST_CENTRO DECIMAL(5,2);
+
+DESC UBICACION;
+
+	-- Eliminación de tres columnas adicionales generadas durante la importación del CSV.
+ 
+ALTER TABLE PUNTUACION
+RENAME COLUMN MyUnknownColumn TO COL_1;
+
+ALTER TABLE PUNTUACION
+RENAME COLUMN `MyUnknownColumn_[0]` TO COL_4;
+
+ALTER TABLE PUNTUACION
+RENAME COLUMN `MyUnknownColumn_[1]` TO COL_2;
+
+ALTER TABLE PUNTUACION
+DROP COLUMN COL_1;
+
+ALTER TABLE PUNTUACION
+DROP COLUMN COL_4;
+
+ALTER TABLE PUNTUACION
+DROP COLUMN COL_2;
+
+	-- Sustitución de comas por puntos como separador decimal
+-- en las columnas PUNTOS y PUNTOS_AGENCIA. 
+
+UPDATE PUNTUACION
+SET PUNTOS = REPLACE(PUNTOS,',','.'),
+	PUNTOS_AGENCIA = REPLACE(PUNTOS_AGENCIA,',','.');
+    
+    -- Sustitución de valores vacíos por NULL en las columnas
+-- PUNTOS y PUNTOS_AGENCIA.
+UPDATE PUNTUACION
+SET PUNTOS = NULL
+WHERE TRIM(PUNTOS) = '';
+
+UPDATE PUNTUACION
+SET PUNTOS_AGENCIA = NULL
+WHERE TRIM(PUNTOS_AGENCIA) = '';
+
+	-- Conversión de las columnas de puntuación de texto a decimal. 
+    
+ALTER TABLE PUNTUACION
+MODIFY COLUMN PUNTOS DECIMAL(5,2),
+MODIFY COLUMN PUNTOS_AGENCIA DECIMAL(5,2); 
+
+SELECT * FROM PUNTUACION;
+DESC PUNTUACION;
+
+-- 2. ANÁLISIS DE REQUISITOS DEL CLIENTE
+    
+    -- 2.1. Alojamientos con terraza y aire acondicionado, sin piscina. 
+SELECT 
+*
+FROM ALOJAMIENTO
+WHERE TERRAZA = 'SI'
+AND AIREC_ACOND='SI'
+AND PISCINA= 'NO';
+
+	-- 2.2. Alojamientos con salón y más de un baño. 
+SELECT
+*
+FROM ALOJAMIENTO
+WHERE SALON ='SI'
+AND CANT_BANYOS>1;
+
+	-- 2.3. Alojamientos con una superficie mínima de 80 m². 
+SELECT
+*
+FROM ALOJAMIENTO
+WHERE SUPERFICIE >=80
+ORDER BY SUPERFICIE ASC;
+
+	-- 2.4. Alojamientos situados al menos a 1 km del metro y a 2 km del centro. 
+SELECT
+*
+FROM UBICACION 
+WHERE DIST_METRO >=1
+AND DIST_CENTRO >=2
+ORDER BY DIST_METRO ASC;
+
+	-- 2.5. Alojamientos con un precio de alquiler entre 1.500 € y 2.000 € por noche. 
+SELECT
+*
+FROM PRECIO
+WHERE PRECIO_ALQUILER BETWEEN 1500 AND 2000
+ORDER BY PRECIO_ALQUILER ASC;
+
+	-- 2.6. Alojamientos con un porcentaje de reserva del 25 %. 
+SELECT
+*
+FROM PRECIO
+WHERE PORCENTAJE_RESERVA = 25;
+
+	-- 2.7. Alojamientos con puntuación superior a 4,5 y agencias con puntuación superior a 4.
+SELECT
+*
+FROM PUNTUACION
+WHERE PUNTOS >4.5
+AND PUNTOS_AGENCIA>4
+ORDER BY PUNTOS DESC;
+
+-- 3. SELECCIÓN DE ALOJAMIENTOS QUE CUMPLEN TODOS LOS REQUISITOS
+    -- Integración de las cuatro tablas mediante INNER JOIN y aplicación
+-- conjunta de los criterios de selección establecidos por el cliente.
+SELECT
+	A.CODIGO_ALOJAMIENTO,
+    A.NOMBRE,
+	A.TERRAZA,
+    A.AIREC_ACOND,
+    A.PISCINA,
+    A.CANT_HAB,
+    A.CANT_BANYOS,
+    A.SALON,
+    A.SUPERFICIE,
+    U.PAIS,
+    U.CIUDAD,
+    U.DIST_METRO,
+    U.DIST_CENTRO,
+    P.PRECIO_ALQUILER,
+    P.PORCENTAJE_RESERVA,
+    PT.PUNTOS,
+    PT.PUNTOS_AGENCIA
+    
+FROM ALOJAMIENTO AS A
+	INNER JOIN UBICACION AS U ON A.CODIGO_ALOJAMIENTO = U.CODIGO_ALOJAMIENTO
+	INNER JOIN PRECIO AS P ON A.CODIGO_ALOJAMIENTO = P.CODIGO_ALOJAMIENTO
+	INNER JOIN PUNTUACION AS PT ON A.CODIGO_ALOJAMIENTO = PT.CODIGO_ALOJAMIENTO
+    
+WHERE A.TERRAZA = 'SI'
+	AND A.AIREC_ACOND='SI'
+	AND A.PISCINA= 'NO'
+    AND A.SALON ='SI'
+	AND A.CANT_BANYOS>1
+    AND A.SUPERFICIE >=80
+    AND U.DIST_METRO >=1
+	AND U.DIST_CENTRO>=2
+    AND P.PRECIO_ALQUILER BETWEEN 1500 AND 2000
+    AND P.PORCENTAJE_RESERVA = 25
+    AND PT.PUNTOS >4.5
+	AND PT.PUNTOS_AGENCIA>4
+	
+    ORDER BY CODIGO_ALOJAMIENTO ASC;
+
+-- 4. ANÁLISIS DE RESULTADOS Y RECOMENDACIÓN 
+    
+    -- 4.1. Evaluación de los cuatro alojamientos que cumplen todos 
+    -- los requisitos y selección de la alternativa más adecuada.
+    
+-- 4.2. ANÁLISIS COMPLEMENTARIO DE LOS ALOJAMIENTOS
+	
+    -- 4.2.1. Superficie total de los alojamientos con piscina.
+SELECT
+	SUM(SUPERFICIE)
+FROM ALOJAMIENTO
+WHERE PISCINA = 'SI';
+    
+    -- 4.2.2. Identificación del alojamiento con mayor superficie.
+SELECT
+	CODIGO_ALOJAMIENTO,
+	NOMBRE,
+	SUPERFICIE
+FROM ALOJAMIENTO
+ORDER BY SUPERFICIE DESC
+LIMIT 1;
+	
+	-- 4.2.3. Identificación del alojamiento con menor superficie.
+SELECT 
+CODIGO_ALOJAMIENTO,
+NOMBRE,
+SUPERFICIE
+FROM ALOJAMIENTO
+ORDER BY SUPERFICIE ASC
+LIMIT 1;
+
+	-- 4.2.4. Número de alojamientos con terraza y con salón.
+SELECT
+	SUM(CASE WHEN TERRAZA = 'SI' THEN 1 ELSE 0 END) AS PISOS_CON_TERRAZA,
+    SUM(CASE WHEN SALON = 'SI' THEN 1 ELSE 0 END ) AS PISOS_CON_SALON
+FROM ALOJAMIENTO;
+    
+    -- 4.2.5. Número de alojamientos por país.
+SELECT
+	PAIS,
+    COUNT(*) AS ALOJAMIENTOS_POR_PAIS
+FROM UBICACION
+GROUP BY PAIS;
+    
+	-- 4.2.6. Cálculo del precio medio de alquiler de los alojamientos.  
+SELECT
+   CONCAT(ROUND(AVG(PRECIO_ALQUILER),2), '€') AS PROMEDIO_PRECIO
+FROM PRECIO;
+
+	-- 4.2.7. Identificación de las agencias con mayor puntuación.
+SELECT
+	AGENCIA,
+    PUNTOS_AGENCIA
+FROM PUNTUACION
+WHERE PUNTOS_AGENCIA=( 
+	SELECT MAX(PUNTOS_AGENCIA) 
+    FROM PUNTUACION);
